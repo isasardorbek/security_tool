@@ -1,0 +1,78 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Code Scanner</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 50px;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+        }
+        textarea {
+            width: 100%;
+            height: 200px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .results {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Security Code Scanner</h1>
+        <form id="scanForm" method="post">
+            {% csrf_token %}
+            <textarea id="code" name="code" placeholder="Paste your code here..."></textarea>
+            <button type="submit">Scan</button>
+        </form>
+        <div class="results" id="results"></div>
+    </div>
+
+    <script>
+        document.getElementById('scanForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            var code = document.getElementById('code').value;
+            fetch('/scan/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: 'code=' + encodeURIComponent(code)
+            })
+            .then(response => response.json())
+            .then(data => {
+                var resultsDiv = document.getElementById('results');
+                resultsDiv.innerHTML = '<h2>Scan Results</h2>';
+                if (data.vulnerabilities && data.vulnerabilities.length > 0) {
+                    var ul = document.createElement('ul');
+                    data.vulnerabilities.forEach(function(vuln) {
+                        var li = document.createElement('li');
+                        li.textContent = vuln;
+                        ul.appendChild(li);
+                    });
+                    resultsDiv.appendChild(ul);
+                } else {
+                    resultsDiv.textContent = 'No vulnerabilities found.';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
